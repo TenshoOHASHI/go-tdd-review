@@ -1,6 +1,7 @@
 package pointer_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -39,48 +40,72 @@ func (w *Wallet) Balance() Bitcoin {
 	return w.balance
 }
 
-func (w *Wallet) Withdraw(amount Bitcoin) Bitcoin {
+var ErrInsufficientFunds = errors.New("cannot withdraw, insufficient funds")
+
+func (w *Wallet) Withdraw(amount Bitcoin) error {
+	if amount > w.balance {
+		return ErrInsufficientFunds
+	}
 	w.balance -= amount
 
-	return w.balance
+	return nil
 
 }
-func TestWallet(t *testing.T) {
 
-	assertBalance := func(t *testing.T, wallet Wallet, want Bitcoin) {
-		// 残高を取得
-		got := wallet.Balance()
-
-		if got != want {
-			t.Errorf("got %s want %s", got, want)
-
-		}
+func assertError(t *testing.T, got error, want error) {
+	t.Helper()
+	// エラーを想定していだけど、エラーでなければ、強制終了
+	if got == nil {
+		t.Fatal("didn't get an error but wanted one")
 	}
 
-	t.Run("Wallet", func(t *testing.T) {
+	if !errors.Is(got, want) {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
 
-		// コレクションを初期化
+func assertBalance(t *testing.T, wallet Wallet, want Bitcoin) {
+	t.Helper()
+
+	// 残高を取得
+	got := wallet.Balance()
+
+	if got != want {
+		t.Errorf("got %s want %s", got, want)
+
+	}
+}
+
+func TestWallet(t *testing.T) {
+
+	t.Run("Deposit", func(t *testing.T) {
 		wallet := Wallet{}
-		// ポインターレシーバーなので、自動で&walletのアドレスを渡している
-		err := wallet.Deposit(Bitcoin(10)) // 自身の新しい型で型変換
-
-		if err != nil {
-			t.Errorf("deposit failed: %v", err)
-		}
-		// fmtが最終的に呼ばれるため、%sにBitcoinのString()が呼ばれます。
-		// got.String()
-		//
-		assertBalance(t, wallet, Bitcoin(10))
-
-	})
-
-	t.Run("Withdraw", func(t *testing.T) {
-		// 預金に20追加し、初期化
-		wallet := Wallet{balance: Bitcoin(20)}
-		// 預金から引き出す
-		wallet.Withdraw(Bitcoin(10))
+		err := wallet.Deposit(Bitcoin(10))
 
 		assertBalance(t, wallet, Bitcoin(10))
-
+		assertNoError(t, err)
 	})
+
+	t.Run("Withdraw with funds", func(t *testing.T) {
+		wallet := Wallet{Bitcoin(20)}
+		err := wallet.Withdraw(Bitcoin(10))
+
+		assertBalance(t, wallet, Bitcoin(10))
+		assertNoError(t, err)
+	})
+
+	t.Run("Withdraw insufficient funds", func(t *testing.T) {
+		wallet := Wallet{Bitcoin(20)}
+		err := wallet.Withdraw(Bitcoin(100))
+
+		assertBalance(t, wallet, Bitcoin(20))
+		assertError(t, err, ErrInsufficientFunds)
+	})
+}
+
+func assertNoError(t *testing.T, got error) {
+	t.Helper()
+	if got != nil {
+		t.Fatal("got an error but didn't want one")
+	}
 }
