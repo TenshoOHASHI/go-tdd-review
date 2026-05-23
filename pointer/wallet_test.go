@@ -46,37 +46,41 @@ func (w *Wallet) Withdraw(amount Bitcoin) Bitcoin {
 
 }
 func TestWallet(t *testing.T) {
-	// コレクションを初期化
-	wallet := Wallet{}
-	// ポインターレシーバーなので、自動で&walletのアドレスを渡している
-	err := wallet.Deposit(Bitcoin(10)) // 自身の新しい型で型変換
 
-	if err != nil {
-		t.Errorf("deposit failed: %v", err)
+	assertBalance := func(t *testing.T, wallet Wallet, want Bitcoin) {
+		// 残高を取得
+		got := wallet.Balance()
+
+		if got != want {
+			t.Errorf("got %s want %s", got, want)
+
+		}
 	}
 
-	got := wallet.Balance()
-
-	want := Bitcoin(10)
-
 	t.Run("Wallet", func(t *testing.T) {
-		if got != want {
-			// fmtが最終的に呼ばれるため、%sにBitcoinのString()が呼ばれます。
-			// got.String()
-			t.Errorf("got %s want %s", got, want)
+
+		// コレクションを初期化
+		wallet := Wallet{}
+		// ポインターレシーバーなので、自動で&walletのアドレスを渡している
+		err := wallet.Deposit(Bitcoin(10)) // 自身の新しい型で型変換
+
+		if err != nil {
+			t.Errorf("deposit failed: %v", err)
 		}
+		// fmtが最終的に呼ばれるため、%sにBitcoinのString()が呼ばれます。
+		// got.String()
+		//
+		assertBalance(t, wallet, Bitcoin(10))
+
 	})
 
 	t.Run("Withdraw", func(t *testing.T) {
+		// 預金に20追加し、初期化
 		wallet := Wallet{balance: Bitcoin(20)}
-
+		// 預金から引き出す
 		wallet.Withdraw(Bitcoin(10))
-		got := wallet.Balance()
 
-		want := Bitcoin(10)
-		if got != want {
-			t.Errorf("got %s want %s", got, want)
-		}
+		assertBalance(t, wallet, Bitcoin(10))
 
 	})
 }
