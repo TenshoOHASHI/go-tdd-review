@@ -32,48 +32,8 @@ func Racer(a, b string) (winner string) {
 
 }
 
-var tenSecondTimeout = 10 * time."use server";
+var tenSecondTimeout = 10 * time.Second
 
-import { z } from "zod";
-import { revalidatePath } from "next/cache";
-
-// Zodスキーマ定義
-const Schema = z.object({
-  field: z.string().min(1, "fieldは必須です"),
-  email: z.string().email("有効なメールアドレスを入力してください"),
-});
-
-/**
- * サーバーアクション（Zodバリデーション付き）
- */
-export async function actionName(formData: FormData) {
-  // フォームデータのパース
-  const rawData = {
-    : formData.get(""),
-    email: formData.get("email"),
-  };
-
-  // Zodによるバリデーション
-  const result = Schema.safeParse(rawData);
-
-  if (!result.success) {
-    return {
-      error: result.error.flatten().fieldErrors,
-      message: "バリデーションエラー"
-    };
-  }
-
-  try {
-    // バリデーション済みデータを使用
-    const { , email } = result.data;
-    // await db.create(...)
-
-    revalidatePath("/path");
-    return { success: true };
-  } catch (error) {
-    return { error: "エラーが発生しました" };
-  }
-}
 func TestMockRacer(t *testing.T) {
 	// 登録した無名関数をリクエストのタイミングで発火し、内部でコールバック関数として実行する
 	slowServer := makeDelayedServer(11 * time.Millisecond)
