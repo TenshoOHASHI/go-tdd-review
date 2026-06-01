@@ -13,4 +13,5 @@ func Countdown(out io.Writer) {
 func main() {
 	// 値 -> os.Stdout -> 正体*os.File -> Writeメソッドを保持　＝　インターフェースのルールを満たしている
 	Countdown(os.Stdout)
+
 }
